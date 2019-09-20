@@ -25,34 +25,6 @@ resource "aws_vpc" "pov" {
   }
 }
 
-#resource "aws_route53_zone" "private" {
-#  name = "${var.prefix}-pov-route53"
-#  vpc {
-#    vpc_id = "${aws_vpc.pov.id}"
-#  }
-#  tags = {
-#    Name = "${var.prefix}-pov-route53"
-#  }
-#}
-
-#resource "aws_route53_record" "vault1" {
-#  zone_id = "${aws_route53_zone.private.zone_id}"
-#  name    = "vault1"
-#  type    = "A"
-#  ttl     = "300"
-#  records = ["${aws_instance.vault1.private_ip}"]
-#}
-
-#resource "aws_route53_record" "vault2" {
-#  zone_id = "${aws_route53_zone.private.zone_id}"
-#  name    = "vault2"
-#  type    = "A"
-#  ttl     = "300"
-#  records = ["${aws_instance.vault2.private_ip}"]
-#}
-
-
-
 resource "aws_subnet" "subnet" {
   vpc_id     = "${aws_vpc.pov.id}"
   availability_zone = "us-east-1a"
@@ -86,40 +58,26 @@ resource "aws_security_group" "pov-sg" {
   vpc_id      = "${aws_vpc.pov.id}"
 
   ingress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = var.cidr_blocks_ingress
+  }
+
+  ingress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    self = true
+  }
+
+  ingress {
     from_port   = 8200
     to_port     = 8200
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
-  ingress {
-    from_port   = 5000
-    to_port     = 5000
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 8500
-    to_port     = 8500
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 8600
-    to_port     = 8600
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
+  
   egress {
     from_port       = 0
     to_port         = 0
@@ -128,28 +86,10 @@ resource "aws_security_group" "pov-sg" {
   }
 }
 
-
-data "aws_ami" "ubuntu" {
-    most_recent = true
-
-    filter {
-        name   = "name"
-        values = ["ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-*"]
-    }
-
-    filter {
-        name   = "virtualization-type"
-        values = ["hvm"]
-    }
-
-    owners = ["099720109477"] # Canonical
-}
-
 module "ssh-keypair-aws" {
   source = "github.com/scarolan/ssh-keypair-aws"
   name   = "${var.prefix}-pov"
 }
-
 
 resource "aws_instance" "vault1" {
   ami           = "${var.awsami}"
@@ -160,7 +100,7 @@ resource "aws_instance" "vault1" {
   key_name = "${module.ssh-keypair-aws.name}"
   tags = {
     Name = "${var.prefix}-vault1"
-    TTL = "72"
+    TTL = "720"
     owner = "jerome"
   }
   connection {
@@ -171,7 +111,12 @@ resource "aws_instance" "vault1" {
   }
   provisioner "remote-exec" {
     inline = [
-      "sudo hostname vault1"
+      "sudo hostname vault1",
+      "echo ${var.id_rsapub} >> /home/ubuntu/.ssh/authorized_keys",
+      "sudo apt-add-repository ppa:ansible/ansible -y",
+      "sudo apt update",
+      "sudo apt install unzip",
+      "sudo apt install dnsmasq",
     ]
   }
 }
@@ -185,7 +130,7 @@ resource "aws_instance" "vault2" {
   key_name = "${module.ssh-keypair-aws.name}"
   tags = {
     Name = "${var.prefix}-vault2"
-    TTL = "72"
+    TTL = "720"
     owner = "jerome"
   }
   connection {
@@ -196,7 +141,12 @@ resource "aws_instance" "vault2" {
   }
   provisioner "remote-exec" {
     inline = [
-      "sudo hostname vault2"
+      "sudo hostname vault2",
+      "echo ${var.id_rsapub} >> /home/ubuntu/.ssh/authorized_keys",
+      "sudo apt-add-repository ppa:ansible/ansible -y",
+      "sudo apt update",
+      "sudo apt install unzip",
+      "sudo apt install dnsmasq",
     ]
   }
 }
@@ -210,7 +160,7 @@ resource "aws_instance" "consul1" {
   key_name = "${module.ssh-keypair-aws.name}"
   tags = {
     Name = "${var.prefix}-consul1"
-    TTL = "72"
+    TTL = "720"
     owner = "jerome"
   }
   connection {
@@ -221,9 +171,14 @@ resource "aws_instance" "consul1" {
   }
   provisioner "remote-exec" {
     inline = [
-      "sudo hostname consul1"
+      "sudo hostname consul1",
+      "echo ${var.id_rsapub} >> /home/ubuntu/.ssh/authorized_keys",
+      "sudo apt-add-repository ppa:ansible/ansible -y",
+      "sudo apt update",
+      "sudo apt install unzip",
+      "sudo apt install dnsmasq",
     ]
-  }  
+  }
 }
 
 resource "aws_instance" "consul2" {
@@ -235,7 +190,7 @@ resource "aws_instance" "consul2" {
   key_name = "${module.ssh-keypair-aws.name}"
   tags = {
     Name = "${var.prefix}-consul2"
-    TTL = "72"
+    TTL = "720"
     owner = "jerome"
   }
   connection {
@@ -246,7 +201,12 @@ resource "aws_instance" "consul2" {
   }
   provisioner "remote-exec" {
     inline = [
-      "sudo hostname consul2"
+      "sudo hostname consul2",
+      "echo ${var.id_rsapub} >> /home/ubuntu/.ssh/authorized_keys",
+      "sudo apt-add-repository ppa:ansible/ansible -y",
+      "sudo apt update",
+      "sudo apt install unzip",
+      "sudo apt install dnsmasq",
     ]
   }
 }
@@ -260,7 +220,7 @@ resource "aws_instance" "consul3" {
   key_name = "${module.ssh-keypair-aws.name}"
   tags = {
     Name = "${var.prefix}-consul3"
-    TTL = "72"
+    TTL = "720"
     owner = "jerome"
   }
   connection {
@@ -271,7 +231,12 @@ resource "aws_instance" "consul3" {
   }
   provisioner "remote-exec" {
     inline = [
-      "sudo hostname consul3"
+      "sudo hostname consul3",
+      "echo ${var.id_rsapub} >> /home/ubuntu/.ssh/authorized_keys",
+      "sudo apt-add-repository ppa:ansible/ansible -y",
+      "sudo apt update",
+      "sudo apt install unzip",
+      "sudo apt install dnsmasq",
     ]
   }
 }
@@ -285,7 +250,7 @@ resource "aws_instance" "ansible" {
   key_name = "${module.ssh-keypair-aws.name}"
   tags = {
     Name = "${var.prefix}-ansible"
-    TTL = "72"
+    TTL = "720"
     owner = "jerome"
   }
   connection {
@@ -294,19 +259,37 @@ resource "aws_instance" "ansible" {
     private_key = "${module.ssh-keypair-aws.private_key_pem}"
     host = "${aws_instance.ansible.public_ip}"
   }
+  
+  provisioner "file" {
+    source      = "keys/.ssh"
+    destination = "/home/ubuntu"
+  }
+  provisioner "file" {
+    source      = "files"
+    destination = "/home/ubuntu"
+  }
+  provisioner "file" {
+    source      = "ansible_playbook/hosts"
+    destination = "/home/ubuntu/hosts"
+  }
+  provisioner "file" {
+    source      = "ansible_playbook/site.yml"
+    destination = "/home/ubuntu/site.yml"
+  }
+
   provisioner "remote-exec" {
     inline = [
       "sudo hostname ansible",
-      "git clone https://github.com/brianshumate/ansible-consul",
-      "git clone https://github.com/brianshumate/ansible-vault",
-#      "sudo apt-add-repository ppa:ansible/ansible",
-#      "sudo apt-get update",
-#      "sudo apt-get install ansible -y",
+      "mkdir ~/roles",
+      "git clone https://github.com/brianshumate/ansible-consul /home/ubuntu/roles/ansible-consul",
+      "git clone https://github.com/brianshumate/ansible-vault /home/ubuntu/roles/ansible-vault",
+      "sudo apt-add-repository ppa:ansible/ansible -y",
+      "sudo apt-get update",
+      "sudo apt-get install ansible -y",
       "sudo apt install unzip",
-      "sudo apt update",
       "sudo apt install python-pip -y",
       "pip install netaddr",
+      "chmod 400 /home/ubuntu/.ssh/id_rsa",
     ]
-  }
+ }
 }
-

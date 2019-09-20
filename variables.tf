@@ -39,3 +39,18 @@ variable "awsami" {
   default = "ami-2757f631"
 }
 
+variable "cidr_blocks_ingress" {
+  description = "The allowed CIDR blocks for ingress"
+  default     = ["0.0.0.0/0"]
+}
+
+variable "create" {
+  description = "Create Module, defaults to true."
+  default     = true
+}
+
+variable "id_rsapub" {
+  description = "Public Key"
+  default     = ""
+}
+

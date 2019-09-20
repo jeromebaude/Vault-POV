@@ -1,8 +1,17 @@
-[vault_instances]
-10.0.10.13
-10.0.10.221
+# Consul cluster node hosts configuration
+#
+# NB: Replace the hosts below with your preferred node hostnames and continue
+#     the 'nodeN' pattern for additional nodes past 'consul3'. There should
+#     be only one node with consul_node_role = "bootstrap"
+#     Do not modify the labels (text appearing between []), however
 
 [consul_instances]
-10.0.10.99
-10.0.10.108
-10.0.10.14
+c3.prod.yet.org consul_node_name=c1 consul_client_address="{{ consul_bind_address }}" consul_node_role=bootstrap  
+c2.prod.yet.org consul_node_name=c2 consul_client_address="{{ consul_bind_address }}" consul_node_role=server
+c1.prod.yet.org consul_node_name=c3 consul_client_address="{{ consul_bind_address }}" consul_node_role=server
+v1.prod.yet.org consul_node_name=cc1
+v2.prod.yet.org consul_node_name=cc2
+
+[vault_instances]
+v1.prod.yet.org
+v2.prod.yet.org

@@ -22,11 +22,6 @@ output "Instructions" {
 # Run the command below to SSH into your server. You can also use PuTTY or any
 # other SSH client. Your SSH key is already loaded for you.
 
-ssh -i ${module.ssh-keypair-aws.private_key_filename} ubuntu@${aws_instance.vault1.public_ip}
-ssh -i ${module.ssh-keypair-aws.private_key_filename} ubuntu@${aws_instance.vault2.public_ip}
-ssh -i ${module.ssh-keypair-aws.private_key_filename} ubuntu@${aws_instance.consul1.public_ip}
-ssh -i ${module.ssh-keypair-aws.private_key_filename} ubuntu@${aws_instance.consul2.public_ip}
-ssh -i ${module.ssh-keypair-aws.private_key_filename} ubuntu@${aws_instance.consul3.public_ip}
-ssh -i ${module.ssh-keypair-aws.private_key_filename} ubuntu@${aws_instance.ansible.public_ip}
+ssh ubuntu@${aws_route53_record.jumphost.name}
 EOF
 }

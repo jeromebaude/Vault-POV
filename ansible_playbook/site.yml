@@ -1,44 +1,34 @@
 ---
-# File: site.yml - Example Consul site playbook
+# File: site.yml - Example Vault site playbook
 # ansible-playbook -i hosts site.yml
-
-- name: Configure Consul cluster
-  hosts: consul_instances
-  any_errors_fatal: true
-  become: true
-  become_user: root
-  roles:
-    - {role: ansible-consul}
-  vars:
-    ansible_ssh_user: ubuntu
-    consul_iface: ens5
-    consul_install_remotely: true
-    consul_version: 1.5.3
-    consul_dnsmasq_enable: true
-    consul_install_upgrade: true
-    consul_pkg: consul-enterprise_{{consul_version}}+ent_linux_amd64.zip
-    consul_checksum_file_url: https://s3-us-west-2.amazonaws.com/hc-enterprise-binaries/consul/ent/{{consul_version}}/consul-enterprise_{{consul_version}}%2Bent_SHA256SUMS
-    consul_zip_url: https://s3-us-west-2.amazonaws.com/hc-enterprise-binaries/consul/ent/{{consul_version}}/consul-enterprise_{{consul_version}}%2Bent_linux_amd64.zip
-    consul_connect_enable: true
 
 - name: Install Vault
   hosts: vault_instances
   any_errors_fatal: true
   become: true
   become_user: root
+  tags:
+   - vault
   roles:
-    - {role: ansible-vault}
+   - { role: ansible-vault } # It will install vault on the vms.
   vars:
-    ansible_ssh_user: ubuntu
-    vault_iface: ens5
-    vault_install_remotely: true
-    vault_version: 1.2.2
-    vault_api_addr: https://{{inventory_hostname}}:8200
-    vault_pkg: vault-enterprise_{{vault_version}}+ent_linux_amd64.zip
-    vault_checksum_file_url: https://s3-us-west-2.amazonaws.com/hc-enterprise-binaries/vault/ent/{{vault_version}}/vault-enterprise_{{vault_version}}%2Bent_SHA256SUMS
-    vault_zip_url: https://s3-us-west-2.amazonaws.com/hc-enterprise-binaries/vault/ent/{{vault_version}}/vault-enterprise_{{vault_version}}%2Bent_linux_amd64.zip
-    vault_performance_standby_disable: true
-    vault_ui: true
-    vault_tls_disable: false
-    vault_tls_src_files: ./files
-    validate_certs_during_api_reachable_check: false
+   ansible_ssh_user: ubuntu
+   vault_iface: ens5
+   vault_install_remotely: true
+   vault_version: 1.4.2
+   vault_api_addr: "https://{{inventory_hostname}}:8200"
+   vault_pkg: "vault_{{vault_version}}+ent_linux_amd64.zip"
+   vault_checksum_file_url: "https://releases.hashicorp.com/vault/{{vault_version}}+ent/vault_{{vault_version}}+ent_SHA256SUMS"
+   vault_zip_url: "https://releases.hashicorp.com/vault/{{vault_version}}+ent/vault_{{vault_version}}+ent_linux_amd64.zip"
+   vault_max_lease_ttl: "87600h"
+   vault_plugin_path: "etc/vault/plugins"
+   vault_ui: true
+   vault_tls_disable: false
+   vault_tls_src_files: ./files
+   validate_certs_during_api_reachable_check: false
+   vault_telemetry_enabled: true
+   vault_prometheus_retention_time: "30s"
+   vault_telemetry_disable_hostname: true
+   vault_backend: "raft"
+   vault_data_path: "/var/vault"
+   vault_dns_disable: false

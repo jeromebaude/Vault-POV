@@ -29,11 +29,6 @@ variable "vm_size" {
   default     = "t3.medium"
 }
 
-variable "vm_size_ansible" {
-  description = "Specifies the size of the virtual machine."
-  default     = "t3.medium"
-}
-
 variable "awsami" {
   description = "AWS AMI"
   default = "ami-2757f631"
@@ -41,7 +36,6 @@ variable "awsami" {
 
 variable "cidr_blocks_ingress" {
   description = "The allowed CIDR blocks for ingress"
-  default     = ["0.0.0.0/0"]
 }
 
 variable "create" {
@@ -51,6 +45,35 @@ variable "create" {
 
 variable "id_rsapub" {
   description = "Public Key"
+  default     = ""
+}
+
+variable "jba_key_pub" {
+  description = "Public Key for Jerome Baude"
+  default     = ""
+}
+
+variable "gdo_key_pub" {
+  description = "Public Key for Gauthier Donikian"
+  default     = ""
+}
+
+variable "jpa_key_pub" {
+  description = "Public Key for Jerome Papazian"
+  default     = ""
+}
+
+variable "jye_key_pub" {
+  description = "Public Key for Jacques Ye"
+  default     = ""
+}
+
+variable "aso_key_pub" {
+  description = "Public Key for Amine Souabni"
+  default     = ""
+}
+variable "hostedzoneid" {
+  description = "Hosted Zone ID"
   default     = ""
 }
 

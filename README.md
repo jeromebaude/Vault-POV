@@ -6,8 +6,8 @@ The Jumphost has SSH access to the 3 VM, ansible installed, playbook and hosts f
 
 ## 1. To be done
 
-Update the site.yml with your Vault preferred version
-Update the certificate and private key ./files/vault.crt ./files/vault.key
-Update the Hosted Zone ID for your domain and Sub domains
-Update the hosts file accordingly
-Provide the necessary variable in terraform.tfvars or in TFE variable section (prefix, awsami, vm_size, id_rsapub, jba_key_pub, hostedzoneid)
+- Update the site.yml with your Vault preferred version
+- Update the certificate and private key ./files/vault.crt ./files/vault.key
+- Update the Hosted Zone ID for your domain and Sub domains
+- Update the hosts file accordingly
+- Provide the necessary variable in terraform.tfvars or in TFE variable section (prefix, awsami, vm_size, id_rsapub, jba_key_pub, hostedzoneid)

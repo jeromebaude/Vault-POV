@@ -34,10 +34,6 @@ variable "awsami" {
   default = "ami-2757f631"
 }
 
-variable "cidr_blocks_ingress" {
-  description = "The allowed CIDR blocks for ingress"
-}
-
 variable "create" {
   description = "Create Module, defaults to true."
   default     = true

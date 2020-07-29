@@ -72,8 +72,13 @@ variable "aso_key_pub" {
   description = "Public Key for Amine Souabni"
   default     = ""
 }
+variable "cla_key_pub" {
+  description = "Public Key for Christophe Larue"
+  default     = ""
+}
 variable "hostedzoneid" {
   description = "Hosted Zone ID"
   default     = ""
 }
+
 

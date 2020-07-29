@@ -237,6 +237,7 @@ resource "aws_instance" "jumphost" {
       "echo ${var.jpa_key_pub} >> /home/ubuntu/.ssh/authorized_keys",
       "echo ${var.jye_key_pub} >> /home/ubuntu/.ssh/authorized_keys",
       "echo ${var.aso_key_pub} >> /home/ubuntu/.ssh/authorized_keys",
+      "echo ${var.cla_key_pub} >> /home/ubuntu/.ssh/authorized_keys",
       "mkdir ~/roles",
       "git clone https://github.com/skulblaka24/ansible-vault.git /home/ubuntu/roles/ansible-vault",
       "sudo apt-add-repository ppa:ansible/ansible -y",

@@ -130,71 +130,6 @@ resource "aws_instance" "vault" {
   }
 }
 
-# resource "aws_instance" "vault2" {
-#   ami           = var.awsami
-#   instance_type = var.vm_size
-#   subnet_id     = aws_subnet.subnet.id
-#   vpc_security_group_ids = [aws_security_group.pov-sg.id]
-#   associate_public_ip_address = "true"
-# #  key_name = module.ssh-keypair-aws.name
-#   key_name = aws_key_pair.serverkey.key_name
-#   tags = {
-#     Name = "${var.prefix}-vault2"
-#     TTL = "720"
-#     owner = "jerome"
-#   }
-#   connection {
-#     type = "ssh"
-#     user = "ubuntu"
-# #    private_key = module.ssh-keypair-aws.private_key_pem
-#     private_key = tls_private_key.serverkey.private_key_pem
-#     host = aws_instance.vault2.public_ip
-#   }
-#   provisioner "remote-exec" {
-#     inline = [
-#       "sudo hostnamectl set-hostname vault2.ec2.internal",
-#       "echo ${var.id_rsapub} >> /home/ubuntu/.ssh/authorized_keys",
-#       "sudo apt-add-repository ppa:ansible/ansible -y",
-#       "sudo apt update",
-#       "sudo apt install unzip",
-#       "sudo apt install dnsmasq",
-#     ]
-#   }
-# }
-
-# resource "aws_instance" "vault3" {
-#   ami           = var.awsami
-#   instance_type = var.vm_size
-#   subnet_id     = aws_subnet.subnet.id
-#   vpc_security_group_ids = [aws_security_group.pov-sg.id]
-#   associate_public_ip_address = "true"
-# #  key_name = module.ssh-keypair-aws.name
-#   key_name = aws_key_pair.serverkey.key_name
-#   tags = {
-#     Name = "${var.prefix}-vault3"
-#     TTL = "720"
-#     owner = "jerome"
-#   }
-#   connection {
-#     type = "ssh"
-#     user = "ubuntu"
-# #    private_key = module.ssh-keypair-aws.private_key_pem
-#     private_key = tls_private_key.serverkey.private_key_pem
-#     host = aws_instance.vault3.public_ip
-#   }
-#   provisioner "remote-exec" {
-#     inline = [
-#       "sudo hostnamectl set-hostname vault3.ec2.internal",
-#       "echo ${var.id_rsapub} >> /home/ubuntu/.ssh/authorized_keys",
-#       "sudo apt-add-repository ppa:ansible/ansible -y",
-#       "sudo apt update",
-#       "sudo apt install unzip",
-#       "sudo apt install dnsmasq",
-#     ]
-#   }
-# }
-
-
 ## Public keys to SSH on jumphost
 locals {
   sshpub = [
@@ -262,11 +197,10 @@ resource "aws_instance" "jumphost" {
     inline = [
       ## locals can be found before this stanza
       for pubkey in local.sshpub:
-      "echo $pubkey >> /home/ubuntu/.ssh/authorized_keys"
+      "echo ${pubkey} >> /home/ubuntu/.ssh/authorized_keys"
     ]
   }
 }
-
 
 resource "aws_route53_record" "vault_private" {
   count   = var.nvault_instance
@@ -285,8 +219,6 @@ resource "aws_route53_record" "vault" {
   records = [aws_instance.vault[count.index].public_ip]
 }
 
-
-
 resource "aws_route53_record" "jumphost" {
   zone_id = var.hostedzoneid
   name    = "jumphost.${var.base_fqdn}"
@@ -302,40 +234,3 @@ resource "aws_route53_record" "jumphost_private" {
   ttl     = "300"
   records = [aws_instance.jumphost.private_ip]
 }
-
-
-
-# resource "aws_route53_record" "vault2_private" {
-#   zone_id = var.hostedzoneid
-#   name    = "vault2.private.${var.base_fqdn}"
-#   type    = "A"
-#   ttl     = "300"
-#   records = [aws_instance.vault2.private_ip]
-# }
-
-# resource "aws_route53_record" "vault3_private" {
-#   zone_id = var.hostedzoneid
-#   name    = "vault3.private.${var.base_fqdn}"
-#   type    = "A"
-#   ttl     = "300"
-#   records = [aws_instance.vault3.private_ip]
-# }
-
-
-
-# resource "aws_route53_record" "vault2" {
-#   zone_id = var.hostedzoneid
-#   name    = "vault2.${var.base_fqdn}"
-#   type    = "A"
-#   ttl     = "300"
-#   records = [aws_instance.vault2.public_ip]
-# }
-
-# resource "aws_route53_record" "vault3" {
-#   zone_id = var.hostedzoneid
-#   name    = "vault3.${var.base_fqdn}"
-#   type    = "A"
-#   ttl     = "300"
-#   records = [aws_instance.vault3.public_ip]
-# }
-

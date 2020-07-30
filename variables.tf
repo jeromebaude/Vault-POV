@@ -30,8 +30,8 @@ variable "vm_size" {
 }
 
 variable "awsami" {
-  description = "AWS AMI Centos 8.2"
-  default = "ami-05786aa5add3ca7c8"
+  description = "AWS AMI Ubuntu 18.04 LTS"
+  default = "ami-0cf777d3cf97a1518"
 }
 
 variable "create" {

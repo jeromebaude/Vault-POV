@@ -11,7 +11,7 @@ variable "prefix" {
 
 variable "region" {
   description = "The amazon region to use."
-  default     = "us-east-1"
+  default     = "eu-west-3"
 }
 
 variable "address_space" {
@@ -30,8 +30,8 @@ variable "vm_size" {
 }
 
 variable "awsami" {
-  description = "AWS AMI"
-  default = "ami-2757f631"
+  description = "AWS AMI Centos 8.2"
+  default = "ami-05786aa5add3ca7c8"
 }
 
 variable "create" {
@@ -72,9 +72,17 @@ variable "cla_key_pub" {
   description = "Public Key for Christophe Larue"
   default     = ""
 }
+
+variable "base_fqdn" {
+  description = "Fully Qualified Domain Name for route 53"
+}
+
 variable "hostedzoneid" {
   description = "Hosted Zone ID"
   default     = ""
 }
 
-
+variable "nvault_instance" {
+  type        = number
+  description = "Number of Vault instance wanted"
+}

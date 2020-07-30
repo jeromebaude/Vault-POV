@@ -25,7 +25,7 @@ resource "aws_vpc" "pov" {
 
 resource "aws_subnet" "subnet" {
   vpc_id     = aws_vpc.pov.id
-  availability_zone = "us-east-1a"
+  availability_zone = "${var.region}a"
   cidr_block = var.subnet_prefix
 
   tags = {
@@ -97,29 +97,30 @@ resource aws_key_pair "serverkey" {
   public_key = tls_private_key.serverkey.public_key_openssh
 }
 
-resource "aws_instance" "vault1" {
+resource "aws_instance" "vault" {
+  count         = var.nvault_instance
   ami           = var.awsami
   instance_type = var.vm_size
   subnet_id     = aws_subnet.subnet.id
   vpc_security_group_ids = [aws_security_group.pov-sg.id]
   associate_public_ip_address = "true"
-#  key_name = module.ssh-keypair-aws.name
+  #  key_name = module.ssh-keypair-aws.name
   key_name = aws_key_pair.serverkey.key_name
   tags = {
-    Name = "${var.prefix}-vault1"
+    Name = "${var.prefix}-vault${count.index}"
     TTL = "720"
-    owner = "jerome"
+    owner = "${var.prefix}"
   }
   connection {
     type = "ssh"
     user = "ubuntu"
-#    private_key = module.ssh-keypair-aws.private_key_pem
+    #    private_key = module.ssh-keypair-aws.private_key_pem
     private_key = tls_private_key.serverkey.private_key_pem
-    host = aws_instance.vault1.public_ip
+    host = self.public_ip
   }
   provisioner "remote-exec" {
     inline = [
-      "sudo hostnamectl set-hostname vault1.ec2.internal",
+      "sudo hostnamectl set-hostname vault${count.index}.ec2.internal",
       "echo ${var.id_rsapub} >> /home/ubuntu/.ssh/authorized_keys",
       "sudo apt-add-repository ppa:ansible/ansible -y",
       "sudo apt update",
@@ -129,68 +130,16 @@ resource "aws_instance" "vault1" {
   }
 }
 
-resource "aws_instance" "vault2" {
-  ami           = var.awsami
-  instance_type = var.vm_size
-  subnet_id     = aws_subnet.subnet.id
-  vpc_security_group_ids = [aws_security_group.pov-sg.id]
-  associate_public_ip_address = "true"
-#  key_name = module.ssh-keypair-aws.name
-  key_name = aws_key_pair.serverkey.key_name
-  tags = {
-    Name = "${var.prefix}-vault2"
-    TTL = "720"
-    owner = "jerome"
-  }
-  connection {
-    type = "ssh"
-    user = "ubuntu"
-#    private_key = module.ssh-keypair-aws.private_key_pem
-    private_key = tls_private_key.serverkey.private_key_pem
-    host = aws_instance.vault2.public_ip
-  }
-  provisioner "remote-exec" {
-    inline = [
-      "sudo hostnamectl set-hostname vault2.ec2.internal",
-      "echo ${var.id_rsapub} >> /home/ubuntu/.ssh/authorized_keys",
-      "sudo apt-add-repository ppa:ansible/ansible -y",
-      "sudo apt update",
-      "sudo apt install unzip",
-      "sudo apt install dnsmasq",
-    ]
-  }
-}
-
-resource "aws_instance" "vault3" {
-  ami           = var.awsami
-  instance_type = var.vm_size
-  subnet_id     = aws_subnet.subnet.id
-  vpc_security_group_ids = [aws_security_group.pov-sg.id]
-  associate_public_ip_address = "true"
-#  key_name = module.ssh-keypair-aws.name
-  key_name = aws_key_pair.serverkey.key_name
-  tags = {
-    Name = "${var.prefix}-vault3"
-    TTL = "720"
-    owner = "jerome"
-  }
-  connection {
-    type = "ssh"
-    user = "ubuntu"
-#    private_key = module.ssh-keypair-aws.private_key_pem
-    private_key = tls_private_key.serverkey.private_key_pem
-    host = aws_instance.vault3.public_ip
-  }
-  provisioner "remote-exec" {
-    inline = [
-      "sudo hostnamectl set-hostname vault3.ec2.internal",
-      "echo ${var.id_rsapub} >> /home/ubuntu/.ssh/authorized_keys",
-      "sudo apt-add-repository ppa:ansible/ansible -y",
-      "sudo apt update",
-      "sudo apt install unzip",
-      "sudo apt install dnsmasq",
-    ]
-  }
+## Public keys to SSH on jumphost
+locals {
+  sshpub = [
+    var.jba_key_pub,
+    var.gdo_key_pub,
+    var.jpa_key_pub,
+    var.jye_key_pub,
+    var.aso_key_pub,
+    var.cla_key_pub
+  ]
 }
 
 resource "aws_instance" "jumphost" {
@@ -204,7 +153,7 @@ resource "aws_instance" "jumphost" {
   tags = {
     Name = "${var.prefix}-jumphost"
     TTL = "720"
-    owner = "jerome"
+    owner = "{var.prefix}"
   }
   connection {
     type = "ssh"
@@ -232,12 +181,6 @@ resource "aws_instance" "jumphost" {
   provisioner "remote-exec" {
     inline = [
       "sudo hostnamectl set-hostname jumphost.ec2.internal",
-      "echo ${var.jba_key_pub} >> /home/ubuntu/.ssh/authorized_keys",
-      "echo ${var.gdo_key_pub} >> /home/ubuntu/.ssh/authorized_keys",
-      "echo ${var.jpa_key_pub} >> /home/ubuntu/.ssh/authorized_keys",
-      "echo ${var.jye_key_pub} >> /home/ubuntu/.ssh/authorized_keys",
-      "echo ${var.aso_key_pub} >> /home/ubuntu/.ssh/authorized_keys",
-      "echo ${var.cla_key_pub} >> /home/ubuntu/.ssh/authorized_keys",
       "mkdir ~/roles",
       "git clone https://github.com/skulblaka24/ansible-vault.git /home/ubuntu/roles/ansible-vault",
       "sudo apt-add-repository ppa:ansible/ansible -y",
@@ -249,70 +192,45 @@ resource "aws_instance" "jumphost" {
       "chmod 400 /home/ubuntu/.ssh/id_rsa",
     ]
   }
+
+  provisioner "remote-exec" {
+    inline = [
+      ## locals can be found before this stanza
+      for pubkey in local.sshpub:
+      "echo ${pubkey} >> /home/ubuntu/.ssh/authorized_keys"
+    ]
+  }
 }
 
-resource "aws_route53_record" "vault1_private" {
+resource "aws_route53_record" "vault_private" {
+  count   = var.nvault_instance
   zone_id = var.hostedzoneid
-  name    = "vault1.private.jerome.aws.hashidemos.io"
+  name    = "vault${count.index}.private.${var.base_fqdn}"
   type    = "A"
   ttl     = "300"
-  records = [aws_instance.vault1.private_ip]
+  records = [aws_instance.vault[count.index].private_ip]
 }
-
-
-resource "aws_route53_record" "vault2_private" {
+resource "aws_route53_record" "vault" {
+  count   = var.nvault_instance
   zone_id = var.hostedzoneid
-  name    = "vault2.private.jerome.aws.hashidemos.io"
+  name    = "vault${count.index}.${var.base_fqdn}"
   type    = "A"
   ttl     = "300"
-  records = [aws_instance.vault2.private_ip]
-}
-
-resource "aws_route53_record" "vault3_private" {
-  zone_id = var.hostedzoneid
-  name    = "vault3.private.jerome.aws.hashidemos.io"
-  type    = "A"
-  ttl     = "300"
-  records = [aws_instance.vault3.private_ip]
-}
-
-resource "aws_route53_record" "jumphost_private" {
-  zone_id = var.hostedzoneid
-  name    = "jumphost.private.jerome.aws.hashidemos.io"
-  type    = "A"
-  ttl     = "300"
-  records = [aws_instance.jumphost.private_ip]
-}
-
-resource "aws_route53_record" "vault1" {
-  zone_id = var.hostedzoneid
-  name    = "vault1.jerome.aws.hashidemos.io"
-  type    = "A"
-  ttl     = "300"
-  records = [aws_instance.vault1.public_ip]
-}
-
-resource "aws_route53_record" "vault2" {
-  zone_id = var.hostedzoneid
-  name    = "vault2.jerome.aws.hashidemos.io"
-  type    = "A"
-  ttl     = "300"
-  records = [aws_instance.vault2.public_ip]
-}
-
-resource "aws_route53_record" "vault3" {
-  zone_id = var.hostedzoneid
-  name    = "vault3.jerome.aws.hashidemos.io"
-  type    = "A"
-  ttl     = "300"
-  records = [aws_instance.vault3.public_ip]
+  records = [aws_instance.vault[count.index].public_ip]
 }
 
 resource "aws_route53_record" "jumphost" {
   zone_id = var.hostedzoneid
-  name    = "jumphost.jerome.aws.hashidemos.io"
+  name    = "jumphost.${var.base_fqdn}"
   type    = "A"
   ttl     = "300"
   records = [aws_instance.jumphost.public_ip]
 }
 
+resource "aws_route53_record" "jumphost_private" {
+  zone_id = var.hostedzoneid
+  name    = "jumphost.private.${var.base_fqdn}"
+  type    = "A"
+  ttl     = "300"
+  records = [aws_instance.jumphost.private_ip]
+}
